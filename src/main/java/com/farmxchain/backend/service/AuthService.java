@@ -1,5 +1,4 @@
 package com.farmxchain.backend.service;
-package com.farmxchain.backend.service;
 
 import com.farmxchain.backend.dto.FarmerDTO;
 import com.farmxchain.backend.dto.FarmerProfileRequest;

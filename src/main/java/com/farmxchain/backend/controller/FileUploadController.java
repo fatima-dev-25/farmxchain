@@ -1,6 +1,6 @@
 package com.farmxchain.backend.controller;
 
-import com.farmxchain.backend..dto.ApiResponse;
+import com.farmxchain.backend.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;

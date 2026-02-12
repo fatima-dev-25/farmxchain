@@ -1,99 +1,162 @@
 package com.farmxchain.backend.controller;
 
-package com.farmxchain.backend.controller;
-
-import com.farmxchain.backend.dto.*;
-import com.farmxchain.backend.entity.OrderStatus;
+import com.farmxchain.backend.dto.ApiResponse;
+import com.farmxchain.backend.dto.FarmerDTO;
+import com.farmxchain.backend.dto.FarmerProfileRequest;
+import com.farmxchain.backend.dto.OrderDTO;
+import com.farmxchain.backend.dto.UserDTO;
 import com.farmxchain.backend.security.SecurityUtils;
-import com.farmxchain.backend.service.DistributorService;
-import com.farmxchain.backend.service.ShipmentLogService;
+import com.farmxchain.backend.service.FarmerService;
+import com.farmxchain.backend.service.OrderService;
+import com.farmxchain.backend.service.UserService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/distributor")
+@RequestMapping("/farmers")
 @CrossOrigin(origins = "*", maxAge = 3600)
-public class DistributorController {
+public class FarmerController {
 
     @Autowired
-    private DistributorService distributorService;
+    private FarmerService farmerService;
 
     @Autowired
-    private ShipmentLogService shipmentLogService;
+    private OrderService orderService;
 
-    /**
-     * GET /distributor/orders
-     * Get all orders assigned to the current distributor
-     */
-    @GetMapping("/orders")
-    @PreAuthorize("hasRole('DISTRIBUTOR')")
-    public ResponseEntity<ApiResponse<List<OrderDTO>>> getAssignedOrders(
-            @RequestParam(required = false) OrderStatus status
-    ) {
-        Long distributorId = SecurityUtils.getCurrentUserId();
-        List<OrderDTO> orders;
+    @Autowired
+    private UserService userService;
 
-        if (status != null) {
-            orders = distributorService.getAssignedOrdersByStatus(distributorId, status);
-        } else {
-            orders = distributorService.getAssignedOrders(distributorId);
-        }
+    @PostMapping("/profile")
+    public ResponseEntity<ApiResponse<FarmerDTO>> createFarmerProfile(
+            @Valid @RequestBody FarmerProfileRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        FarmerDTO farmer = farmerService.createFarmerProfile(userId, request);
+        ApiResponse<FarmerDTO> response = ApiResponse.<FarmerDTO>builder()
+                .success(true)
+                .message("Farmer profile created successfully. Awaiting admin verification.")
+                .data(farmer)
+                .statusCode(HttpStatus.CREATED.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+    }
 
-        return ResponseEntity.ok(new ApiResponse<>(true, "Orders retrieved successfully", orders));
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse<FarmerDTO>> updateFarmerProfile(
+            @Valid @RequestBody FarmerProfileRequest request) {
+        Long userId = SecurityUtils.getCurrentUserId();
+        FarmerDTO farmer = farmerService.updateFarmerProfile(userId, request);
+        ApiResponse<FarmerDTO> response = ApiResponse.<FarmerDTO>builder()
+                .success(true)
+                .message("Farmer profile updated successfully")
+                .data(farmer)
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<ApiResponse<FarmerDTO>> getFarmerProfile() {
+        Long userId = SecurityUtils.getCurrentUserId();
+        FarmerDTO farmer = farmerService.getFarmerProfile(userId);
+        ApiResponse<FarmerDTO> response = ApiResponse.<FarmerDTO>builder()
+                .success(true)
+                .message("Farmer profile retrieved successfully")
+                .data(farmer)
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/{farmerId}")
+    public ResponseEntity<ApiResponse<FarmerDTO>> getFarmerById(@PathVariable Long farmerId) {
+        FarmerDTO farmer = farmerService.getFarmerById(farmerId);
+        ApiResponse<FarmerDTO> response = ApiResponse.<FarmerDTO>builder()
+                .success(true)
+                .message("Farmer retrieved successfully")
+                .data(farmer)
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/crop/{cropType}")
+    public ResponseEntity<ApiResponse<List<FarmerDTO>>> getFarmersByCropType(
+            @PathVariable String cropType) {
+        List<FarmerDTO> farmers = farmerService.getFarmersByCropType(cropType);
+        ApiResponse<List<FarmerDTO>> response = ApiResponse.<List<FarmerDTO>>builder()
+                .success(true)
+                .message("Farmers retrieved successfully")
+                .data(farmers)
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<FarmerDTO>>> getAllFarmers() {
+        List<FarmerDTO> farmers = farmerService.getAllFarmers();
+        ApiResponse<List<FarmerDTO>> response = ApiResponse.<List<FarmerDTO>>builder()
+                .success(true)
+                .message("All farmers retrieved successfully")
+                .data(farmers)
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{farmerId}")
+    public ResponseEntity<ApiResponse<String>> deleteFarmerProfile(@PathVariable Long farmerId) {
+        farmerService.deleteFarmerProfile(farmerId);
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .success(true)
+                .message("Farmer profile deleted successfully")
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     /**
-     * POST /distributor/shipments
-     * Create a new shipment for an assigned order
+     * GET /farmers/distributors
+     * Get list of all available distributors
      */
-    @PostMapping("/shipments")
-    @PreAuthorize("hasRole('DISTRIBUTOR')")
-    public ResponseEntity<ApiResponse<ShipmentDTO>> createShipment(@RequestBody ShipmentRequest request) {
-        Long distributorId = SecurityUtils.getCurrentUserId();
-        ShipmentDTO shipment = distributorService.createShipment(distributorId, request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Shipment created successfully", shipment));
+    @GetMapping("/distributors")
+    @PreAuthorize("hasRole('FARMER')")
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getDistributors() {
+        List<UserDTO> distributors = userService.getUsersByRole("DISTRIBUTOR");
+        ApiResponse<List<UserDTO>> response = ApiResponse.<List<UserDTO>>builder()
+                .success(true)
+                .message("Distributors retrieved successfully")
+                .data(distributors)
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
     /**
-     * PUT /distributor/shipments/{shipmentId}/status
-     * Update shipment status during transit
+     * POST /farmers/orders/{orderId}/assign-distributor
+     * Assign a distributor to a farmer's accepted order
      */
-    @PutMapping("/shipments/{shipmentId}/status")
-    @PreAuthorize("hasRole('DISTRIBUTOR')")
-    public ResponseEntity<ApiResponse<ShipmentDTO>> updateShipmentStatus(
-            @PathVariable Long shipmentId,
-            @RequestBody ShipmentStatusUpdateRequest request
-    ) {
-        Long distributorId = SecurityUtils.getCurrentUserId();
-        ShipmentDTO shipment = distributorService.updateShipmentStatus(distributorId, shipmentId, request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Shipment status updated successfully", shipment));
-    }
+    @PostMapping("/orders/{orderId}/assign-distributor")
+    @PreAuthorize("hasRole('FARMER')")
+    public ResponseEntity<ApiResponse<OrderDTO>> assignDistributorToOrder(
+            @PathVariable Long orderId,
+            @RequestParam Long distributorId) {
 
-    /**
-     * POST /distributor/shipments/deliver
-     * Confirm delivery to buyer
-     */
-    @PostMapping("/shipments/deliver")
-    @PreAuthorize("hasRole('DISTRIBUTOR')")
-    public ResponseEntity<ApiResponse<DeliveryConfirmationResponse>> confirmDelivery(
-            @RequestBody DeliveryConfirmationRequest request
-    ) {
-        Long distributorId = SecurityUtils.getCurrentUserId();
-        DeliveryConfirmationResponse response = distributorService.confirmDelivery(distributorId, request);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Delivery confirmed successfully", response));
-    }
+        // Verify the order belongs to this farmer
+        Long farmerId = SecurityUtils.getCurrentUserId();
+        OrderDTO order = orderService.assignToDistributor(orderId, distributorId);
 
-    /**
-     * GET /distributor/shipments/{shipmentId}/logs
-     * Get all logs for a specific shipment
-     */
-    @GetMapping("/shipments/{shipmentId}/logs")
-    @PreAuthorize("hasRole('DISTRIBUTOR')")
-    public ResponseEntity<ApiResponse<List<ShipmentLogDTO>>> getShipmentLogs(@PathVariable Long shipmentId) {
-        List<ShipmentLogDTO> logs = shipmentLogService.getLogsByShipment(shipmentId);
-        return ResponseEntity.ok(new ApiResponse<>(true, "Shipment logs retrieved successfully", logs));
+        ApiResponse<OrderDTO> response = ApiResponse.<OrderDTO>builder()
+                .success(true)
+                .message("Distributor assigned successfully. Order status changed to ASSIGNED.")
+                .data(order)
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
