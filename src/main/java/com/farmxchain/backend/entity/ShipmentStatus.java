@@ -1,8 +1,9 @@
 package com.farmxchain.backend.entity;
-public enum ShipmentAction {
+
+public enum ShipmentStatus {
     PICKED_UP,
     IN_TRANSIT,
     DELIVERED,
-    LOCATION_UPDATE,
-    STATUS_UPDATE
+    DELAYED,
+    CANCELLED
 }

@@ -1,10 +1,9 @@
-package com.in.backend.backend.service;
+package com.farmxchain.backend.service;
 
 import com.farmxchain.backend.dto.ShipmentDTO;
 import com.farmxchain.backend.entity.Order;
 import com.farmxchain.backend.entity.OrderStatus;
 import com.farmxchain.backend.entity.Shipment;
-import com.farmxchain.backend.entity.ShipmentAction;
 import com.farmxchain.backend.entity.ShipmentStatus;
 import com.farmxchain.backend.exception.ResourceNotFoundException;
 import com.farmxchain.backend.repository.OrderRepository;
@@ -12,6 +11,7 @@ import com.farmxchain.backend.repository.ShipmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.farmxchain.backend.entity.ShipmentAction;
 
 @Service
 @Transactional

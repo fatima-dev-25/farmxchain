@@ -1,57 +1,94 @@
 package com.farmxchain.backend.controller;
 
 import com.farmxchain.backend.dto.ApiResponse;
-import com.farmxchain.backend.dto.LoginRequest;
-import com.farmxchain.backend.dto.LoginResponse;
-import com.farmxchain.backend.dto.RegisterRequest;
-import com.farmxchain.backend.dto.UserDTO;
-import com.farmxchain.backend.service.AuthService;
-import io.swagger.v3.oas.annotations.Operation;
+import com.farmxchain.backend.dto.CropDTO;
+import com.farmxchain.backend.dto.CropRequest;
+import com.farmxchain.backend.security.SecurityUtils;
+import com.farmxchain.backend.service.CropService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/crops")
 @CrossOrigin(origins = "*", maxAge = 3600)
-public class AuthController {
+public class CropController {
 
     @Autowired
-    private AuthService authService;
+    private CropService cropService;
 
-    @Operation(summary = "Register a new user", description = "Register a new user with the provided details")
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserDTO>> register(@Valid @RequestBody RegisterRequest request) {
-        UserDTO user = authService.register(request);
-        ApiResponse<UserDTO> response = ApiResponse.<UserDTO>builder()
+    @PostMapping("/add")
+    public ResponseEntity<ApiResponse<CropDTO>> addCrop(@Valid @RequestBody CropRequest request) {
+        Long farmerId = SecurityUtils.getCurrentUserId();
+        CropDTO crop = cropService.addCrop(farmerId, request);
+        ApiResponse<CropDTO> response = ApiResponse.<CropDTO>builder()
                 .success(true)
-                .message("User registered successfully. Awaiting verification by admin.")
-                .data(user)
+                .message("Crop added successfully and registered on blockchain")
+                .data(crop)
                 .statusCode(HttpStatus.CREATED.value())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
-        LoginResponse loginResponse = authService.login(request);
-        ApiResponse<LoginResponse> response = ApiResponse.<LoginResponse>builder()
+    @GetMapping("/my-crops")
+    public ResponseEntity<ApiResponse<List<CropDTO>>> getMyCrops() {
+        Long farmerId = SecurityUtils.getCurrentUserId();
+        List<CropDTO> crops = cropService.getCropsByFarmer(farmerId);
+        ApiResponse<List<CropDTO>> response = ApiResponse.<List<CropDTO>>builder()
                 .success(true)
-                .message("Login successful")
-                .data(loginResponse)
+                .message("Crops retrieved successfully")
+                .data(crops)
                 .statusCode(HttpStatus.OK.value())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Operation(summary = "Validate token", description = "Validate the JWT token")
-    @GetMapping("/validate")
-    public ResponseEntity<ApiResponse<String>> validateToken() {
-        ApiResponse<String> response = ApiResponse.<String>builder()
+    @GetMapping("/{cropId}")
+    public ResponseEntity<ApiResponse<CropDTO>> getCropById(@PathVariable Long cropId) {
+        CropDTO crop = cropService.getCropById(cropId);
+        ApiResponse<CropDTO> response = ApiResponse.<CropDTO>builder()
                 .success(true)
-                .message("Token is valid")
+                .message("Crop retrieved successfully")
+                .data(crop)
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<List<CropDTO>>> getAllCrops() {
+        List<CropDTO> crops = cropService.getAllCrops();
+        ApiResponse<List<CropDTO>> response = ApiResponse.<List<CropDTO>>builder()
+                .success(true)
+                .message("All crops retrieved successfully")
+                .data(crops)
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/blockchain-records")
+    public ResponseEntity<ApiResponse<List<CropDTO>>> getCropsWithBlockchainRecords() {
+        List<CropDTO> crops = cropService.getCropsWithBlockchainRecords();
+        ApiResponse<List<CropDTO>> response = ApiResponse.<List<CropDTO>>builder()
+                .success(true)
+                .message("Blockchain-verified crops retrieved successfully")
+                .data(crops)
+                .statusCode(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/{cropId}/verify-blockchain")
+    public ResponseEntity<ApiResponse<Boolean>> verifyBlockchainRecord(@PathVariable Long cropId) {
+        boolean isValid = cropService.verifyBlockchainRecord(cropId);
+        ApiResponse<Boolean> response = ApiResponse.<Boolean>builder()
+                .success(true)
+                .message(isValid ? "Blockchain record is valid" : "Blockchain record verification failed")
+                .data(isValid)
                 .statusCode(HttpStatus.OK.value())
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);

@@ -6,7 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
-
+import lombok.*;
+@Getter
+@Setter
 @Entity
 @Table(name = "shipments")
 @Data

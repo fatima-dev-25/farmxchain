@@ -1,5 +1,4 @@
 package com.farmxchain.backend.entity;
-
 public enum ShipmentAction {
     PICKED_UP,
     IN_TRANSIT,

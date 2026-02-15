@@ -1,8 +1,7 @@
 package com.farmxchain.backend.service;
-
+import lombok.Data;
 import com.farmxchain.backend.dto.ShipmentLogDTO;
 import com.farmxchain.backend.entity.Shipment;
-import com.farmxchain.backend.entity.ShipmentAction;
 import com.farmxchain.backend.entity.ShipmentLog;
 import com.farmxchain.backend.exception.ResourceNotFoundException;
 import com.farmxchain.backend.repository.ShipmentLogRepository;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.farmxchain.backend.entity.ShipmentAction;
 
 @Service
 @Transactional
