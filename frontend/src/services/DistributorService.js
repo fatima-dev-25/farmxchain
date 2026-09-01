@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api/v1/distributor';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api/v1';
+const API_URL = `${API_BASE_URL}/distributor`;
 
 // Add auth token to all requests
 const getAuthHeader = () => {
@@ -83,7 +84,7 @@ class DistributorService {
     // Get shipment by order ID (from logistics service)
     async getShipmentByOrderId(orderId) {
         try {
-            const response = await axios.get(`http://localhost:8080/api/v1/logistics/order/${orderId}`, {
+            const response = await axios.get(`${API_BASE_URL}/logistics/order/${orderId}`, {
                 headers: getAuthHeader()
             });
             return response.data;
